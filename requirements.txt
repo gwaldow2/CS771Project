@@ -1,0 +1,13 @@
+tensorboard
+tensorboardX
+torchmetrics
+opencv-python
+scikit-image
+pillow
+numpy
+matplotlib
+tqdm
+einops
+safetensors
+huggingface-hub
+transformers

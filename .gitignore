@@ -1,0 +1,40 @@
+# datasets & large stuff
+data/
+logs/
+runs/
+checkpoints/
+af_sfmlearner_weights/
+*.pth
+*.pt
+*.safetensors
+*.zip
+
+# splits: keep folders, ignore generated lists
+splits/**/train*.txt
+splits/**/val*.txt
+
+# cache / build junk
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# editors / env
+.vscode/
+.idea/
+.venv/
+.env
+NUL
+data/
+logs/
+runs/
+*.pth
+*.pt
+*.safetensors
+*.zip
+splits/**/train*.txt
+splits/**/val*.txt
+.venv/
