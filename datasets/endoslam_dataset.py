@@ -25,7 +25,7 @@ def _parse_cam_txt(cam_txt_path: str):
 class EndoSLAMDataset(MonoDataset):
     """
     Split line (relative to --data_path), e.g.:
-        Cameras/HighCam/HighCam/Stomach-I/TumorfreeTrajectory_1/Frames  60
+        Cameras/HighCam/Stomach-I/TumorfreeTrajectory_1/Frames  60
     """
     def __init__(self, *args, **kwargs):
         super(EndoSLAMDataset, self).__init__(*args, **kwargs)
@@ -35,7 +35,7 @@ class EndoSLAMDataset(MonoDataset):
     def _raw_K(self):
         if self._raw_intrinsics is None:
             cam_txt = os.path.join(
-                self.data_path, "Cameras", "HighCam", "HighCam", "Calibration", "cam.txt.txt"
+                self.data_path, "Cameras", "HighCam", "Calibration", "cam.txt.txt"
             )
             if not os.path.isfile(cam_txt):
                 raise FileNotFoundError(f"Calibration file not found: {cam_txt}")
