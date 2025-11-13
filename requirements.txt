@@ -11,3 +11,4 @@ einops
 safetensors
 huggingface-hub
 transformers
+gdown

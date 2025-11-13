@@ -83,10 +83,15 @@ class EndoSLAMDataset(MonoDataset):
         return img
 
     def __getitem__(self, index):
-        toks = self.filenames[index].split()
-        if len(toks) < 2:
-            raise ValueError(f"Bad split line: {self.filenames[index]}")
-        folder_rel = toks[0]
+        # Use the robust parser from MonoDataset to correctly handle
+        # spaces, pipes, optional side tokens, etc.
+        folder_rel, frame_index, side = self._parse_filename_line(self.filenames[index])
+
+        # Compute intrinsics from the actual Frames directory
         frames_abs = os.path.join(self.data_path, folder_rel)
         self.K = self._normalized_K_for_frames(frames_abs)
+
+        # MonoDataset.__getitem__ will parse the same line again using
+        # _parse_filename_line, so folder/frame_index/side stay consistent.
         return super().__getitem__(index)
+
