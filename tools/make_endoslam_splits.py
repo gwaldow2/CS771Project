@@ -26,8 +26,10 @@ def collect_lines(data_root: str):
                 continue
             idx = int(m.group(1))
             rel_folder = os.path.relpath(dirpath, data_root).replace("\\", "/")
-            lines.append(f"{rel_folder} {idx}")
+            # Use a pipe to separate folder and frame index so spaces are irrelevant
+            lines.append(f"{rel_folder}|{idx}")
     return lines
+
 
 def main():
     ap = argparse.ArgumentParser()
