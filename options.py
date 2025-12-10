@@ -97,7 +97,7 @@ class MonodepthOptions:
                                    "--split",
                                    type=str,
                                    help="which training split to use",
-                                   choices=["endovis", "endoslam", "eigen_zhou", "eigen_full", "odom", "benchmark"],
+                                   choices=["endovis", "endoslam", "eigen_zhou", "eigen_full", "odom", "benchmark", "scared_smoke"],
                                    default="endovis",
                                    )
 
@@ -114,6 +114,77 @@ class MonodepthOptions:
                                    help="Run a 1-batch CPU check to check endoSLAM dataset (no SSIM, 1 worker, batch=1, 1 epoch).",
                                    action="store_true")
 
+        # MODIFICATION: LoRA options -----
+        # High-level LoRA mode selector
+        self.parser.add_argument(
+            "--lora_mode",
+            type=str,
+            help=(
+                "LoRA configuration for the DepthAnything backbone. "
+                "'dares' = original DARES-style vector-LoRA; "
+                "'schedule' = static depth-dependent rank schedule; "
+                "'adalora' = dynamic AdaLoRA-style rank adaptation."
+            ),
+            choices=["dares", "schedule", "adalora"],
+            default="dares",
+        )
+
+        # Static schedule (used when lora_mode == 'schedule')
+        self.parser.add_argument(
+            "--lora_schedule_type",
+            type=str,
+            help=(
+                "Rank schedule over transformer depth when using Vector-LoRA. "
+                "'dares_front' = original DARES front-heavy vector; "
+                "'uniform' = same rank for all layers; "
+                "'back_heavy' = higher rank in deeper layers; "
+                "'u_shape' = higher rank in early+late layers, lower in the middle."
+            ),
+            choices=["dares_front", "uniform", "back_heavy", "u_shape"],
+            default="dares_front",
+        )
+        self.parser.add_argument(
+            "--lora_base_rank",
+            type=int,
+            help="Base LoRA rank for schedule modes (e.g., 14 as in DARES).",
+            default=14,
+        )
+        self.parser.add_argument(
+            "--lora_min_rank",
+            type=int,
+            help="Minimum LoRA rank allowed in any layer when using scheduled ranks.",
+            default=4,
+        )
+
+        # AdaLoRA-style dynamic rank adaptation (used when lora_mode == 'adalora')
+        self.parser.add_argument(
+            "--adalora_max_rank",
+            type=int,
+            help="Maximum LoRA rank per layer when using AdaLoRA-style adaptation.",
+            default=16,
+        )
+        self.parser.add_argument(
+            "--adalora_total_rank_budget",
+            type=int,
+            help=(
+                "Approximate global rank budget for all LoRA layers combined. "
+                "AdaLoRA redistributes this budget across layers based on importance."
+            ),
+            default=144,  # e.g., 12 layers * rank 12
+        )
+        self.parser.add_argument(
+            "--adalora_warmup_steps",
+            type=int,
+            help="Number of training steps before starting AdaLoRA rank adaptation.",
+            default=1000,
+        )
+        self.parser.add_argument(
+            "--adalora_update_interval",
+            type=int,
+            help="How many training steps between AdaLoRA rank reallocation events.",
+            default=500,
+        )
+        # --------------------------------
 
         # OPTIMIZATION options
         self.parser.add_argument("--batch_size",
@@ -215,7 +286,7 @@ class MonodepthOptions:
                                  type=str,
                                  default="endovis",
                                  choices=[
-                                    "eigen", "eigen_benchmark", "benchmark", "odom_9", "odom_10", "endovis"],
+                                    "eigen", "eigen_benchmark", "benchmark", "odom_9", "odom_10", "endovis", "scared_smoke"],
                                  help="which split to run eval on")
         self.parser.add_argument("--save_pred_disps",
                                  help="if set saves predicted disparities",

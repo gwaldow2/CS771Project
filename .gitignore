@@ -30,6 +30,7 @@ build/
 NUL
 data/
 logs/
+logs_smoke/
 runs/
 *.pth
 *.pt

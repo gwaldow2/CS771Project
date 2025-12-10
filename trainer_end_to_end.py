@@ -79,7 +79,30 @@ class Trainer:
         self.parameters_to_train_0 = []
 
         # Depth model (DARES)
-        self.models["depth_model"] = DARES()
+        # MODIFICATION: AdaLora/Schedule -----
+        # Instantiate DARES with LoRA configuration from options, letting DARES
+        # internally derive rank vectors from these high-level knobs.
+        self.models["depth_model"] = DARES(
+            lora_mode=getattr(self.opt, "lora_mode", "dares"),
+            lora_schedule_type=getattr(self.opt, "lora_schedule_type", "dares_front"),
+            lora_base_rank=getattr(self.opt, "lora_base_rank", 14),
+            lora_min_rank=getattr(self.opt, "lora_min_rank", 4),
+            adalora_max_rank=getattr(self.opt, "adalora_max_rank", 16),
+            adalora_total_rank_budget=getattr(self.opt, "adalora_total_rank_budget", 144),
+        )
+        # ---------------------
+        ## Commented out code which it replaces
+        # self.models["depth_model"] = DARES(
+        #     lora_mode=self.opt.lora_mode,
+        #     lora_schedule_type=self.opt.lora_schedule_type,
+        #     lora_base_rank=self.opt.lora_base_rank,
+        #     lora_min_rank=self.opt.lora_min_rank,
+        #     adalora_max_rank=self.opt.adalora_max_rank,
+        #     adalora_total_rank_budget=self.opt.adalora_total_rank_budget,
+        #     r=self.opt.lora_r,
+        #     lora=self.opt.lora_targets,
+        # )
+        # -------------------------------
         self.models["depth_model"].to(self.device)
         # Only add trainable params (LoRA etc.)
         self.parameters_to_train += list(filter(lambda p: p.requires_grad, self.models["depth_model"].parameters()))
@@ -106,12 +129,16 @@ class Trainer:
         self.models["position_encoder"] = networks.ResnetEncoder(
             self.opt.num_layers, self.opt.weights_init == "pretrained", num_input_images=2
         )
-        self.models["position_encoder"].load_state_dict(torch.load(os.path.join(weights_dir, "position_encoder.pth"), map_location="cpu"))
+        self.models["position_encoder"].load_state_dict(
+            torch.load(os.path.join(weights_dir, "position_encoder.pth"), map_location="cpu")
+        )
         self.models["position_encoder"].to(self.device)
         self.parameters_to_train_0 += list(self.models["position_encoder"].parameters())
 
         self.models["position"] = networks.PositionDecoder(self.models["position_encoder"].num_ch_enc, self.opt.scales)
-        self.models["position"].load_state_dict(torch.load(os.path.join(weights_dir, "position.pth"), map_location="cpu"))
+        self.models["position"].load_state_dict(
+            torch.load(os.path.join(weights_dir, "position.pth"), map_location="cpu")
+        )
         self.models["position"].to(self.device)
         self.parameters_to_train_0 += list(self.models["position"].parameters())
 
@@ -119,12 +146,16 @@ class Trainer:
         self.models["transform_encoder"] = networks.ResnetEncoder(
             self.opt.num_layers, self.opt.weights_init == "pretrained", num_input_images=2
         )
-        self.models["transform_encoder"].load_state_dict(torch.load(os.path.join(weights_dir, "transform_encoder.pth"), map_location="cpu"))
+        self.models["transform_encoder"].load_state_dict(
+            torch.load(os.path.join(weights_dir, "transform_encoder.pth"), map_location="cpu")
+        )
         self.models["transform_encoder"].to(self.device)
         self.parameters_to_train += list(self.models["transform_encoder"].parameters())
 
         self.models["transform"] = networks.TransformDecoder(self.models["transform_encoder"].num_ch_enc, self.opt.scales)
-        self.models["transform"].load_state_dict(torch.load(os.path.join(weights_dir, "transform.pth"), map_location="cpu"))
+        self.models["transform"].load_state_dict(
+            torch.load(os.path.join(weights_dir, "transform.pth"), map_location="cpu")
+        )
         self.models["transform"].to(self.device)
         self.parameters_to_train += list(self.models["transform"].parameters())
 
@@ -137,25 +168,33 @@ class Trainer:
                 self.models["pose_encoder"] = networks.ResnetEncoder(
                     self.opt.num_layers, self.opt.weights_init == "pretrained", num_input_images=self.num_pose_frames
                 )
-                self.models["pose_encoder"].load_state_dict(torch.load(pose_encoder_path, map_location="cpu"))
+                self.models["pose_encoder"].load_state_dict(
+                    torch.load(pose_encoder_path, map_location="cpu")
+                )
                 self.models["pose_encoder"].to(self.device)
                 self.parameters_to_train += list(self.models["pose_encoder"].parameters())
 
                 self.models["pose"] = networks.PoseDecoder(
                     self.models["pose_encoder"].num_ch_enc, num_input_features=1, num_frames_to_predict_for=2
                 )
-                self.models["pose"].load_state_dict(torch.load(pose_decoder_path, map_location="cpu"))
+                self.models["pose"].load_state_dict(
+                    torch.load(pose_decoder_path, map_location="cpu")
+                )
             elif self.opt.pose_model_type == "shared":
                 # If you ever switch to shared encoders, ensure self.models["encoder"] exists.
                 self.models["pose"] = networks.PoseDecoder(
                     self.models["encoder"].num_ch_enc, self.num_pose_frames
                 )
-                self.models["pose"].load_state_dict(torch.load(os.path.join(weights_dir, "pose.pth"), map_location="cpu"))
+                self.models["pose"].load_state_dict(
+                    torch.load(os.path.join(weights_dir, "pose.pth"), map_location="cpu")
+                )
             elif self.opt.pose_model_type == "posecnn":
                 self.models["pose"] = networks.PoseCNN(
                     self.num_input_frames if self.opt.pose_model_input == "all" else 2
                 )
-                self.models["pose"].load_state_dict(torch.load(os.path.join(weights_dir, "pose.pth"), map_location="cpu"))
+                self.models["pose"].load_state_dict(
+                    torch.load(os.path.join(weights_dir, "pose.pth"), map_location="cpu")
+                )
 
             self.models["pose"].to(self.device)
             self.parameters_to_train += list(self.models["pose"].parameters())
@@ -193,6 +232,15 @@ class Trainer:
         print("Training model named:\n  ", self.opt.model_name)
         print("Models and tensorboard events files are saved to:\n  ", self.opt.log_dir)
         print("Training is using:\n  ", self.device)
+        if hasattr(self.opt, "lora_mode"):
+            print(
+                f"LoRA config -> mode: {self.opt.lora_mode}, "
+                f"schedule: {getattr(self.opt, 'lora_schedule_type', 'dares_front')}, "
+                f"base_rank: {getattr(self.opt, 'lora_base_rank', 14)}, "
+                f"min_rank: {getattr(self.opt, 'lora_min_rank', 4)}, "
+                f"adalora_max_rank: {getattr(self.opt, 'adalora_max_rank', 16)}, "
+                f"adalora_total_rank_budget: {getattr(self.opt, 'adalora_total_rank_budget', 144)}"
+            )
 
         # -----------------------
         # Data
