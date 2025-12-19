@@ -1,0 +1,16 @@
+ Eval_Depth:
+
+ Base model:
+
+ Scaling ratios | med: 334.942 | std: 0.000
+
+   abs_rel |   sq_rel |     rmse | rmse_log |       a1 |       a2 |       a3 |
+&   0.076  &   0.838  &   8.492  &   0.111  &   0.941  &   0.998  &   1.000  \\
+
+ AdaLora:
+
+  Scaling ratios | med: 379.383 | std: 0.001
+
+   abs_rel |   sq_rel |     rmse | rmse_log |       a1 |       a2 |       a3 |
+&   0.088  &   1.008  &   9.035  &   0.125  &   0.900  &   0.999  &   1.000  \\
+

@@ -1,0 +1,100 @@
+#setup
+python tools/prepare_endovis.py \
+    --split_name endovis \
+    --train_ratio 0.8 \
+    --max_total 0
+
+# Training
+
+# DARES-equivalent setup (same vecto-LoRa)
+python train_end_to_end.py \
+    --dataset endovis \
+    --data_path data/endovis \
+    --split endovis \
+    --model_name endovis_dares_default \
+    --log_dir logs \
+    --height 384 \
+    --width 384 \
+    --batch_size 8 \
+    --num_epochs 4 \
+    --num_workers 8 \
+    --lora_mode dares \
+    --lora_schedule_type dares_front
+
+# Alternative Vector setup
+python train_end_to_end.py \
+    --dataset endovis \
+    --data_path data/endovis \
+    --split endovis \
+    --model_name endovis_dares_back_heavy \
+    --log_dir logs \
+    --height 384 \
+    --width 384 \
+    --batch_size 8 \
+    --num_epochs 4 \
+    --num_workers 8 \
+    --lora_mode schedule \
+    --lora_schedule_type back_heavy \
+    --lora_base_rank 12 \
+    --lora_min_rank 8
+
+# AdaLora
+python train_end_to_end.py \
+    --dataset endovis \
+    --data_path data/endovis \
+    --split endovis \
+    --model_name endovis_dares_adalora \
+    --log_dir logs \
+    --height 384 \
+    --width 384 \
+    --batch_size 8 \
+    --num_epochs 4 \
+    --num_workers 8 \
+    --lora_mode adalora \
+    --lora_base_rank 16 \
+    --lora_min_rank 4 \
+    --adalora_max_rank 16 \
+    --adalora_total_rank_budget 144 \
+    --adalora_warmup_steps 500 \
+    --adalora_update_interval 500
+
+
+# Before evals
+
+python export_gt_depth.py \
+  --data_path data/endovis \
+  --split endovis \
+
+# Lora settings must match what they were when trained for this
+python evaluate_depth.py \
+    --data_path data/endovis \
+    --load_weights_folder logs/endovis_dares_default/models/weights_3 \
+    --eval_split endovis \
+    --eval_mono \
+    --post_process \
+    --lora_mode dares \
+    --lora_schedule_type dares_front
+
+python evaluate_depth.py \
+    --data_path data/endovis \
+    --load_weights_folder logs/endovis_dares_back_heavy/models/weights_3 \
+    --eval_split endovis \
+    --eval_mono \
+    --post_process \
+    --lora_mode schedule \
+    --lora_schedule_type back_heavy \
+    --lora_base_rank 12 \
+    --lora_min_rank 8
+
+python evaluate_depth.py \
+    --data_path data/endovis \
+    --load_weights_folder logs/endovis_dares_adalora/models/weights_3 \
+    --eval_split endovis \
+    --eval_mono \
+    --post_process \
+    --lora_mode adalora \
+    --lora_base_rank 16 \
+    --lora_min_rank 4 \
+    --adalora_max_rank 16 \
+    --adalora_total_rank_budget 144
+
